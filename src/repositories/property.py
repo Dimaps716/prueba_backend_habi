@@ -24,15 +24,14 @@ def filter_properties(
     method = filter_properties.__name__
     db = create_session()
     try:
-        # Construir la consulta SQL
         query = """
-			   SELECT p.*
-			   FROM property AS p
-			   INNER JOIN status_history AS he ON p.id = he.property_id
-			   INNER JOIN status AS e ON he.status_id = e.id
-			   WHERE e.name IN ('pre_venta', 'en_venta', 'vendido')
-			   AND p.price > 0
-		   """
+            SELECT p.*, e.name AS status_name
+            FROM property AS p
+            INNER JOIN status_history AS he ON p.id = he.property_id
+            INNER JOIN status AS e ON he.status_id = e.id
+            WHERE e.name IN ('pre_venta', 'en_venta', 'vendido')
+            AND p.price > 0
+        """
 
         if city:
             query += " AND p.city = '{}'".format(city)
@@ -44,10 +43,13 @@ def filter_properties(
             cleaned_address = address.replace("'", "''").replace('"', '""')
             query += " AND p.address LIKE '%{}%'".format(cleaned_address)
 
-            # Execute the query and retrieve the results
-        properties = db.execute(query)
+        # Ejecutar la consulta y obtener los resultados
+        results = db.execute(query)
 
-        return properties.fetchall()
+        # Convertir los resultados en una lista de diccionarios
+        properties = [dict(row) for row in results]
+
+        return properties
 
     except Exception as ex:
         logging.error(f"{method}: {ex}")
