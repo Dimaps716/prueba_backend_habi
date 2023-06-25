@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Query, status
 from typing import List
+
+from fastapi import APIRouter, Query, status
 
 from repositories.property import filter_properties
 
