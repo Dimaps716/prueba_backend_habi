@@ -6,21 +6,22 @@ from fastapi import HTTPException, status
 from repositories.database import create_session
 
 
-def filter_properties(
-    city: str = None, year: int = None, address: str = None
-) -> List[dict]:
+from typing import List
+
+def filter_properties(city: List[str] = None, year: List[int] = None, address: List[str] = None) -> List[dict]:
     """
     Filters available properties based on the specified filters.
 
     Args:
-        city (str, optional): City of the property. (Optional filter)
-        construction_year (int, optional): Construction year of the property. (Optional filter)
-        address (str, optional): Address of the property. (Optional filter)
+        city (List[str], optional): Cities of the properties. (Optional filter)
+        year (List[int], optional): Construction years of the properties. (Optional filter)
+        address (List[str], optional): Addresses of the properties. (Optional filter)
 
     Returns:
         List[dict]: List of filtered properties.
 
     """
+
     method = filter_properties.__name__
     db = create_session()
     try:
@@ -34,17 +35,24 @@ def filter_properties(
         """
 
         if city:
-            query += " AND p.city = '{}'".format(city)
+            query += " AND p.city IN :cities"
 
         if year:
-            query += " AND p.year = {}".format(year)
+            query += " AND p.year IN :years"
 
         if address:
-            cleaned_address = address.replace("'", "''").replace('"', '""')
-            query += " AND p.address LIKE '%{}%'".format(cleaned_address)
+            query += " AND ("
+            for i, a in enumerate(address):
+                if i > 0:
+                    query += " OR "
+                query += "p.address LIKE :address{}".format(i)
+            query += ")"
 
         # Ejecutar la consulta y obtener los resultados
-        results = db.execute(query)
+        results = db.execute(
+            query,
+            {"cities": city, "years": year, **{"address{}".format(i): "%{}%".format(a) for i, a in enumerate(address)}},
+        )
 
         # Convertir los resultados en una lista de diccionarios
         properties = [dict(row) for row in results]
@@ -53,7 +61,7 @@ def filter_properties(
 
     except Exception as ex:
         logging.error(f"{method}: {ex}")
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"error {method}")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Error {method}")
 
     finally:
         db.close()

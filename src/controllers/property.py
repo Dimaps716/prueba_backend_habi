@@ -13,9 +13,9 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
 )
 def search_properties(
-    city: str = Query(None, description="Filter by city of the property"),
-    address: str = Query(None, description="Filter by address of the property"),
-    year: int = Query(None, description="Filter by construction year of the property"),
+    city: List[str] = Query(None, description="Filter by city of the property"),
+    address: List[str] = Query(None, description="Filter by address of the property"),
+    year: List[str] = Query(None, description="Filter by construction year of the property"),
 ):
     """
     Searches for available properties based on the specified filters.
@@ -23,7 +23,7 @@ def search_properties(
     Args:
         city (str, optional): City of the property. (Optional filter)
         address (str, optional): Address of the property. (Optional filter)
-        construction_year (int, optional): Construction year of the property. (Optional filter)
+        year (int, optional): Construction year of the property. (Optional filter)
 
     Returns:
         List[PropertySchema]: List of filtered properties.
