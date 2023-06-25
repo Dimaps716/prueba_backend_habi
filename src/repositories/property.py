@@ -26,9 +26,14 @@ def filter_properties(city: List[str] = None, year: List[int] = None, address: L
     db = create_session()
     try:
         query = """
-            SELECT p.*, e.name AS status_name
+            SELECT DISTINCT p.id, p.address, p.city, p.price, p.description, p.year, e.name AS status_name
             FROM property AS p
-            INNER JOIN status_history AS he ON p.id = he.property_id
+            INNER JOIN (
+                SELECT property_id, MAX(update_date) AS max_date
+                FROM status_history
+                GROUP BY property_id
+            ) AS latest ON p.id = latest.property_id
+            INNER JOIN status_history AS he ON p.id = he.property_id AND latest.max_date = he.update_date
             INNER JOIN status AS e ON he.status_id = e.id
             WHERE e.name IN ('pre_venta', 'en_venta', 'vendido')
             AND p.price > 0
