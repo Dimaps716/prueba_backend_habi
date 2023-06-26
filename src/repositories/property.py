@@ -53,11 +53,16 @@ def filter_properties(city: List[str] = None, year: List[int] = None, address: L
                 query += "p.address LIKE :address{}".format(i)
             query += ")"
 
+        params = {
+            "cities": city,
+            "years": year,
+        }
+
+        if address is not None:
+            params.update({"address{}".format(i): "%{}%".format(a) for i, a in enumerate(address)})
+
         # Ejecutar la consulta y obtener los resultados
-        results = db.execute(
-            query,
-            {"cities": city, "years": year, **{"address{}".format(i): "%{}%".format(a) for i, a in enumerate(address)}},
-        )
+        results = db.execute(query, params)
 
         # Convertir los resultados en una lista de diccionarios
         properties = [dict(row) for row in results]
